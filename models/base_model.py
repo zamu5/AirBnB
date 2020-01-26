@@ -1,44 +1,62 @@
 #!/usr/bin/python3
-from uuid import uuid4
-from datetime import datetime
+"""This is the base model class for AirBnB"""
+import uuid
 import models
+from datetime import datetime
+
 
 class BaseModel:
+    """This class will defines all common attributes/methods
+    for other classes
+    """
 
     def __init__(self, *args, **kwargs):
-        if (kwargs):
-            #recretae the values of a instance in base a dictionary
-            for k, v in kwargs.items():
-                if k != '__class__':
-                    if k == "created_at" or k == "updated_at":
-                        v = datetime.strptime(v, '%Y-%m-%dT%H:%M:%S.%f')
-                    setattr(self, k, v)
+        """Instantiation of base model class
+        Args:
+            args: it won't be used
+            kwargs: arguments for the constructor of the BaseModel
+        Attributes:
+            id: unique id generated
+            created_at: creation date
+            updated_at: updated date
+        """
+        if kwargs:
+            for key, value in kwargs.items():
+                if key == "created_at" or key == "updated_at":
+                    value = datetime.strptime(value, "%Y-%m-%dT%H:%M:%S.%f")
+                if key != "__class__":
+                    setattr(self, key, value)
         else:
-            #create a new instance
-            self.id = str(uuid4())
-            self.created_at = datetime.now()
-            self.updated_at = datetime.now()
+            self.id = str(uuid.uuid4())
+            self.created_at = self.updated_at = datetime.now()
             models.storage.new(self)
 
     def __str__(self):
-        #print format
-        return "[{}] ({}) {}".format(self.__class__.__name__, self.id,
-                                     self.__dict__)
+        """returns a string
+        Return:
+            returns a string of class name, id, and dictionary
+        """
+        return "[{}] ({}) {}".format(
+            type(self).__name__, self.id, self.__dict__)
+
+    def __repr__(self):
+        """return a string representaion
+        """
+        return self.__str__()
 
     def save(self):
-        #update the date
+        """updates the public instance attribute updated_at to current
+        """
         self.updated_at = datetime.now()
         models.storage.save()
 
     def to_dict(self):
-        #return a dictionary similar to __dict__ but change the format of
-        #created_at and updated_at
-        ret_dict = {}
-        object_dict = self.__dict__
-        ret_dict['__class__'] = self.__class__.__name__
-        for k, v in object_dict.items():
-            if k is "created_at" or k is "updated_at":
-                ret_dict[k] = v.isoformat()
-            else:
-                ret_dict[k] = v
-        return ret_dict
+        """creates dictionary of the class  and returns
+        Return:
+            returns a dictionary of all the key values in __dict__
+        """
+        my_dict = dict(self.__dict__)
+        my_dict["__class__"] = str(type(self).__name__)
+        my_dict["created_at"] = self.created_at.isoformat()
+        my_dict["updated_at"] = self.updated_at.isoformat()
+        return my_dict
